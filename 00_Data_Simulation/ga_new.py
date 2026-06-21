@@ -8,36 +8,36 @@ from matrix_translator import PriorToCorrelationTranslator
 
 def set_global_determinism(seed):
     """
-    [修改点 1]：让锁接受外部传入的动态种子
+    Lock the global random number generators to ensure strict computational reproducibility.
     """
     os.environ['PYTHONHASHSEED'] = str(seed)
     random.seed(seed)
     np.random.seed(seed)
-    print(f"🔒 全局系统种子已锁死 (Seed={seed})，进入确定性计算模式。")
+    print(f"🔒 Global system seed locked (Seed={seed}). Entering deterministic computation mode.")
 
 
 def run_full_e_step(data_dir, n_patients=3000, current_seed=2026):
     """
-    [修改点 2]：主函数增加 current_seed 参数
+    Execute the Copula Expectation-step to construct the synthetic cohort.
     """
-    print("\n" + "=" * 50)
-    print(f"🤖 启动 Copula E-步 引擎 | 当前平行宇宙种子: {current_seed}")
-    print("=" * 50 + "\n")
+    print("\n" + "=" * 60)
+    print(f"🤖 Initiating Copula E-step Engine | Current PRNG Seed: {current_seed}")
+    print("=" * 60 + "\n")
 
-    # 【核心修复】：根据传入的种子，锁死当前宇宙！
+    # Step 0: Ensure strict determinism for the current execution
     set_global_determinism(seed=current_seed)
 
-    # 第一步：翻译文献先验，生成 Sigma 矩阵
+    # Step 1: Translate empirical priors to the correlation matrix (Sigma)
     translator = PriorToCorrelationTranslator(data_dir)
     sigma_matrix = translator.build_correlation_matrix()
 
-    # 第二步：创造虚拟队列
-    print("\n----------------------------------------")
+    # Step 2: Construct the synthetic cohort via Gaussian Copula
+    print("\n------------------------------------------------------------")
     generator = SyntheticCohortGenerator(data_dir)
     synthetic_data = generator.generate_cohort(n_patients=n_patients, correlation_matrix=sigma_matrix)
 
-    # --- [NC级方法学补丁 1]：自适应边缘重校准 ---
-    print("\n⚖️ 正在执行自适应边缘重校准...")
+    # --- [Methodological Patch 1]: Adaptive Marginal Recalibration ---
+    print("\n⚖️ Executing adaptive marginal recalibration...")
     nodes_df = pd.read_csv(os.path.join(data_dir, 'nodes_marginal.csv')).set_index('node_id')
     survival_endpoints = ['Y_PFS_TKI_All', 'Y_OS_TKI_All', 'Y_PFS_IO', 'Y_OS_IO']
 
@@ -48,8 +48,8 @@ def run_full_e_step(data_dir, n_patients=3000, current_seed=2026):
             calibration_alpha = target_median / current_median
             synthetic_data[endpoint] = synthetic_data[endpoint] * calibration_alpha
 
-    # --- [NC级方法学补丁 2]：应用右删失模拟器 ---
-    print("\n⚙️ 正在应用右删失模拟器...")
+    # --- [Methodological Patch 2]: Right-Censoring Simulation ---
+    print("\n⚙️ Applying right-censoring simulator...")
     median_followup = 30.0
 
     for endpoint in survival_endpoints:
@@ -62,14 +62,14 @@ def run_full_e_step(data_dir, n_patients=3000, current_seed=2026):
             synthetic_data[endpoint] = observed_time
             synthetic_data[f"{endpoint}_Event"] = event_indicator
 
-    # [修改点 3]：修改输出文件名，加上 seed，防止覆盖掉你的黄金数据！
+    # Save the synthetic cohort with the specific PRNG seed in the filename
     output_filename = f"synthetic_cohort_n{n_patients}_seed{current_seed}.csv"
     output_path = os.path.join(data_dir, output_filename)
     synthetic_data.to_csv(output_path, index=False)
 
-    print("\n========================================")
-    print(f"🎉 成功生成 3000 名虚拟患者！数据已保存至: {output_filename}")
-    print("========================================")
+    print("\n============================================================")
+    print(f"🎉 Successfully constructed {n_patients} synthetic patients! Data saved to: {output_filename}")
+    print("============================================================")
 
     return synthetic_data
 
@@ -78,18 +78,19 @@ if __name__ == "__main__":
     DATA_DIR = r"./data"
 
     # ==========================================
-    # 🧪 极限压力测试区 (Stress Testing)
-    # 你可以在这里输入一个包含多个种子的列表来循环跑！
+    # 🧪 Stress Testing Module
+    # Iterate through multiple PRNG seeds to validate macroscopic stability
     # ==========================================
     test_seeds = [100]
 
     for seed in test_seeds:
         df_cohort = run_full_e_step(DATA_DIR, n_patients=3000, current_seed=seed)
 
-        print(f"\n--- 验证宇宙 {seed} 的宏观规律 (脑转移) ---")
+        print(f"\n--- Validating macroscopic survival penalties for Seed {seed} ---")
         df_events = df_cohort[df_cohort['Y_PFS_TKI_All_Event'] == 1]
+
         med_pfs_no_brain = df_events[df_events['E1_Brain_Met'] == 0]['Y_PFS_TKI_All'].median()
         med_pfs_with_brain = df_events[df_events['E1_Brain_Met'] == 1]['Y_PFS_TKI_All'].median()
 
-        print(f"✅ [Seed {seed}] 无脑转移患者 中位PFS: {med_pfs_no_brain:.2f} 个月")
-        print(f"✅ [Seed {seed}] 有脑转移患者 中位PFS: {med_pfs_with_brain:.2f} 个月\n")
+        print(f"✅ [Seed {seed}] Median PFS without Brain Met: {med_pfs_no_brain:.2f} months")
+        print(f"✅ [Seed {seed}] Median PFS with Brain Met:    {med_pfs_with_brain:.2f} months\n")
