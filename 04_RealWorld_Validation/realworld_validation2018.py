@@ -10,7 +10,7 @@ warnings.filterwarnings("ignore")
 
 BASE_DIR = "./data/luad_tcga_pan_can_atlas_2018/"
 RESULTS_DIR = "./results"
-if not os.path.exists(RESULTS_DIR): 
+if not os.path.exists(RESULTS_DIR):
     os.makedirs(RESULTS_DIR)
 
 print("🔍 Loading TCGA-LUAD PanCancer final validation cohort...")
@@ -50,7 +50,7 @@ df_expr = df_expr.reset_index()
 # ==========================================================
 # 3. Data Merging and Log Transformation
 # ==========================================================
-# Truncate to the 15-character core TCGA barcode (e.g., TCGA-05-4244-01) 
+# Truncate to the 15-character core TCGA barcode (e.g., TCGA-05-4244-01)
 # to ensure 100% deterministic matching across sub-datasets
 df_tmb['Merge_ID'] = df_tmb['SAMPLE_ID'].str[:15]
 df_expr['Merge_ID'] = df_expr['SAMPLE_ID'].str[:15]
