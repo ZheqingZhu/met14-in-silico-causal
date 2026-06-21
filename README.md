@@ -5,28 +5,28 @@
 
 ## 📌 Overview
 
-This repository contains the official code and analytical pipeline for our study investigating the causal architecture and therapeutic mediators of *MET*ex14 non-small cell lung cancer (NSCLC). 
+This repository contains the official codebase and analytical pipeline for our study investigating the causal architecture and therapeutic mediators of *MET*ex14 non-small cell lung cancer (NSCLC). 
 
-Evaluating rare mutational subsets is fundamentally hindered by data fragmentation and multidimensional confounding. Designed with the rigorous standards of computer science and medical-engineering research, this repository provides a fully reproducible computational framework. We utilize a multi-family Gaussian copula sampling framework to construct a high-fidelity 3,000-patient synthetic cohort, followed by an ensemble score-based causal discovery algorithm (regularized by EBIC) and Pearl's *do*-calculus to isolate absolute survival effects from baseline confounding.
+The evaluation of rare mutational subsets is typically constrained by data fragmentation and multidimensional confounding. To address this challenge, we provide a fully reproducible computational framework. Specifically, we apply a multi-family Gaussian copula sampling framework to construct a 3,000-patient synthetic cohort. We then implement an ensemble score-based causal discovery algorithm (regularized by EBIC) and Pearl's *do*-calculus to isolate absolute survival effects from baseline confounding.
 
 ## 🏗️ Repository Architecture
 
-The codebase is highly decoupled into sequential, modular scripts to ensure strict computational reproducibility:
+The analytical pipeline is organized into sequential modules to facilitate computational reproducibility:
 
-* **`00_Data_Simulation/`**: Data construction via a multi-family Gaussian copula sampling framework and adaptive recalibration to build the synthetic cohort.
-* **`01_Network_Discovery/`**: Ensemble structural learning using a Genetic Algorithm (GA) optimized via the extended Bayesian Information Criterion (EBIC). **(⏱️ Note: The exhaustive global search in this module requires approximately 4 hours to complete).**
-* **`02_Causal_Inference/`**: Implementation of Pearl's *do*-calculus, back-door adjustment, and causal Hazard Ratio (HR) estimations.
-* **`03_Visualization/`**: Generation of counterfactual Kaplan-Meier survival curves (G-computation).
-* **`04_RealWorld_Validation/`**: Topological validation scripts analyzing independent, real-world multi-omics cohorts (TCGA & MSKCC).
-* **`data/`**: Directory for raw summaries, processed individual patient data (IPD), and external validation datasets.
+* **`00_Data_Simulation/`**: Data construction and adaptive recalibration via a multi-family Gaussian copula sampling framework to build the synthetic cohort.
+* **`01_Network_Discovery/`**: Ensemble structural learning using a Genetic Algorithm (GA) optimized via the extended Bayesian information criterion (EBIC).
+* **`02_Causal_Inference/`**: Implementation of Pearl's *do*-calculus, back-door adjustment, and causal hazard ratio (HR) estimation.
+* **`03_Visualization/`**: Construction of counterfactual Kaplan-Meier survival curves via parametric G-computation.
+* **`04_RealWorld_Validation/`**: Topological validation analyzing independent, real-world multi-omics cohorts (TCGA & MSKCC).
+* **`data/`**: Directory containing raw summary statistics, reconstructed individual patient data (IPD), and external validation datasets.
 
 ## ⚙️ Environment Setup
 
-To avoid dependency conflicts and ensure exact replication of the study's results, please create a fresh virtual environment (Python 3.10.4 recommended) and install the strictly versioned dependencies:
+We recommend configuring a clean virtual environment (Python 3.10.4) and installing the pinned dependencies to match our exact computational environment:
 
 ```bash
 # Clone the repository
-git clone https://github.com/ZheqingZhu/met14-in-silico-causal.git
+git clone [https://github.com/ZheqingZhu/met14-in-silico-causal.git](https://github.com/ZheqingZhu/met14-in-silico-causal.git)
 cd met14-in-silico-causal
 
 # Install required packages
@@ -35,21 +35,21 @@ pip install -r requirements.txt
 
 ## 🚀 One-Click Reproduction
 
-For peer reviewers and researchers wishing to reproduce the core findings (Table 1, Figure 3, etc.) seamlessly, we provide an automated pipeline script.
+For peer reviewers and researchers wishing to reproduce the core findings (Table 1, Figure 3, etc.) seamlessly, we provide a cross-platform automated pipeline script.
 
-Ensure the script has execution privileges, then run it directly from your terminal:
+You can execute the entire pipeline directly from your terminal:
 
 ```bash
-chmod +x run_pipeline.sh
-
 # Run the standard pipeline
-./run_pipeline.sh
+python main.py
 ```
 
-**Fast-Track Validation (Demo Mode):** The full ensemble network discovery (5 independent PRNG seeds × 100 optimization iterations) is computationally intensive and takes approximately **4 hours**. For a rapid verification of the codebase functionality without waiting for the full global search, use the `--demo` flag. This executes a truncated evolutionary search to validate the pipeline logic in minutes:
+**(⏱️ Note on Execution Time):** The standard pipeline includes the full ensemble network discovery (5 independent PRNG seeds × 100 optimization iterations) within the `01_Network_Discovery` module. This specific step is computationally intensive and requires approximately **4 hours** to complete on standard hardware.
+
+**Fast-Track Validation (Demo Mode):** For a rapid verification of the codebase functionality without waiting for the exhaustive optimization process, use the `--demo` flag. This executes a truncated evolutionary search to validate the pipeline logic in just a few minutes:
 
 ```bash
-./run_pipeline.sh --demo
+python main.py --demo
 ```
 
 ## 🗄️ Data Schema & Acquisition
@@ -63,18 +63,11 @@ When interacting with the generated synthetic data in `data/synthetic/`, please 
 ### 2. External Real-World Validation Data (Figure 5)
 To comply with data-sharing agreements and GitHub file size limits, the raw multi-omics validation datasets are **not** included directly in this repository. To completely reproduce the real-world topological validation, please download the public datasets directly from the cBioPortal Datahub:
 
-* **MSKCC LUAD Organotropism (2023):** Download [Archive](https://cbioportal-datahub.s3.amazonaws.com/luad_mskcc_2023_met_organotropism.tar.gz) and extract into `data/raw/luad_mskcc_2023_met_organotropism/`
-* **TCGA-LUAD PanCancer Atlas (2018):** Download [Archive](https://cbioportal-datahub.s3.amazonaws.com/luad_tcga_pan_can_atlas_2018.tar.gz) and extract into `data/raw/luad_tcga_pan_can_atlas_2018/`
-* **MSKCC NSCLC ctDNA (2022):** Download [Archive](https://cbioportal-datahub.s3.amazonaws.com/nsclc_ctdx_msk_2022.tar.gz) and extract into `data/raw/nsclc_ctdx_msk_2022/`
+* **MSKCC LUAD Organotropism (2023):** Download [Archive](https://datahub.assets.cbioportal.org/luad_mskcc_2023_met_organotropism.tar.gz) and extract into `data/raw/luad_mskcc_2023_met_organotropism/`
+* **TCGA-LUAD PanCancer Atlas (2018):** Download [Archive](https://datahub.assets.cbioportal.org/luad_tcga_pan_can_atlas_2018.tar.gz) and extract into `data/raw/luad_tcga_pan_can_atlas_2018/`
+* **MSKCC NSCLC ctDNA (2022):** Download [Archive](https://datahub.assets.cbioportal.org/nsclc_ctdx_msk_2022.tar.gz) and extract into `data/raw/nsclc_ctdx_msk_2022/`
 
 *(Note: The validation scripts are pre-configured to automatically read the target `.txt` files once placed in these directories.)*
-
-## 🔗 Ecosystem Integration: IPD Reconstruction
-
-The empirical priors and structural constraints utilized in this Copula sampling framework were derived from high-fidelity individual patient data (IPD). Due to the unavailability of shared patient-level data from the original clinical trials, this IPD was computationally reconstructed from published Kaplan-Meier curves using our open-source constraint-consistent inverse optimization framework:
-
-* **Tool:** **[KM-PoPiGo](https://kmpopigo.github.io/)**
-* **Transparency:** All raw digital reconstruction project files used in this study have been deposited in this repository. Reviewers can directly import these files into the KM-PoPiGo web interface to interactively verify the curve fits and time-to-event extractions.
 
 ## 📝 License & Citation
 
